@@ -7,7 +7,7 @@ describe('preEffects ordering', () => {
     return cards.sort((a,b)=> a.card.number-b.card.number || (initiative===a.who?-1:1)).map(c=>c.who);
   }
   it('orders by lowest number then initiative', () => {
-    const cards = [
+    const cards: { who: 'player'|'enemy'; card: Card }[] = [
       { who: 'player', card: { id:'p', number: 5 }},
       { who: 'enemy', card: { id:'e', number: 5 }}
     ];
