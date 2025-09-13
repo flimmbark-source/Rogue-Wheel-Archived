@@ -4,6 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Rogue Wheel</title>
+  <style>
+  /* Make sure the page can actually show fixed overlays */
+  html, body, #root {
+    height: 100%;
+  }
+  body {
+    overflow-x: hidden;
+  }
+
+  /* Absolutely highest z-index stack for overlays */
+  #overlay-root {
+    position: relative;
+    z-index: 2147483647; /* max int-ish */
+  }
+  </style>
   </head>
   <body>
     <div id="root"></div>
