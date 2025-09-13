@@ -1,42 +1,65 @@
+// Hand.tsx
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { Card } from '../lib/fighter';
 
 type HandProps = {
   cards: Card[];
   onSelect?: (c: Card) => void;
-  /** How far above the bottom edge to lift the hand (px) */
-  liftPx?: number;
+  liftPx?: number; // how much to float it above the edge
 };
 
 export function Hand({ cards, onSelect, liftPx = 24 }: HandProps) {
-  return (
+  const handUI = (
     <div
       role="grid"
-      className="fixed inset-x-0 bottom-0 z-40 pointer-events-none"
-      // Lift the hand above the bottom, respecting iOS safe area
-      style={{ bottom: `calc(env(safe-area-inset-bottom, 0px) + ${liftPx}px)` }}
+      style={{
+        position: 'fixed',
+        left: 0,
+        right: 0,
+        bottom: `calc(env(safe-area-inset-bottom, 0px) + ${liftPx}px)`,
+        zIndex: 9999,
+        pointerEvents: 'none',
+      }}
     >
-      <div
-        className="pointer-events-auto mx-auto max-w-screen-md"
-      >
+      <div style={{ maxWidth: 960, margin: '0 auto', pointerEvents: 'auto' }}>
         <div
-          className="flex items-end justify-center gap-2 px-3 pb-2 overflow-x-auto"
-          // Prevent accidental touch scrolling trapping; tweak if needed
-          style={{ WebkitOverflowScrolling: 'touch' }}
+          style={{
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+            gap: 8,
+            padding: '0 12px 8px',
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
+          }}
         >
           {cards.map((c) => (
             <button
               key={c.id}
               onClick={() => onSelect?.(c)}
-              role="gridcell"
-              className="shrink-0 transition-transform duration-200 bg-white/95 border border-black/10 rounded-lg px-3 py-2 shadow-md hover:-translate-y-2"
+              style={{
+                flexShrink: 0,
+                padding: '8px 12px',
+                borderRadius: 8,
+                border: '1px solid rgba(0,0,0,0.1)',
+                background: 'rgba(255,255,255,0.95)',
+                boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
+                transform: 'translateY(-8px)',
+                transition: 'transform 200ms',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-12px)')}
+              onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(-8px)')}
             >
-              <div className="text-xs font-semibold opacity-70">{c.name}</div>
-              <div className="text-xl font-bold leading-none">{c.number}</div>
+              <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.7 }}>{c.name}</div>
+              <div style={{ fontSize: 20, fontWeight: 800, lineHeight: 1 }}>{c.number}</div>
             </button>
           ))}
         </div>
       </div>
     </div>
   );
+
+  // Render to <body> so transforms/overflow on ancestors can’t clip it
+  return createPortal(handUI, document.body);
 }
