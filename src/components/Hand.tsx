@@ -1,28 +1,63 @@
 // Hand.tsx
-import React from 'react';
+import React, { useLayoutEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Card } from '../lib/fighter';
+import type { Card } from '../lib/fighter';
 
 type HandProps = {
   cards: Card[];
   onSelect?: (c: Card) => void;
-  liftPx?: number; // how much to float it above the edge
+  liftPx?: number; // how far above the bottom to float
+  reserveHeightPx?: number; // space to reserve at bottom of page
 };
 
-export function Hand({ cards, onSelect, liftPx = 24 }: HandProps) {
-  const handUI = (
+export function Hand({
+  cards,
+  onSelect,
+  liftPx = 24,
+  reserveHeightPx = 92
+}: HandProps) {
+  // Ensure an overlay root exists on <body>
+  const overlayRoot = useMemo(() => {
+    let el = document.getElementById('overlay-root');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'overlay-root';
+      document.body.appendChild(el);
+    }
+    return el;
+  }, []);
+
+  // Reserve space at the bottom of the document so important UI isn’t hidden
+  useLayoutEffect(() => {
+    const spacer = document.createElement('div');
+    spacer.setAttribute('data-hand-spacer', 'true');
+    spacer.style.width = '100%';
+    spacer.style.height = `${reserveHeightPx}px`;
+    spacer.style.pointerEvents = 'none';
+    document.body.appendChild(spacer);
+    return () => { spacer.remove(); };
+  }, [reserveHeightPx]);
+
+  const ui = (
     <div
       role="grid"
       style={{
         position: 'fixed',
         left: 0,
         right: 0,
+        // sit above the system safe area + small lift
         bottom: `calc(env(safe-area-inset-bottom, 0px) + ${liftPx}px)`,
-        zIndex: 9999,
+        zIndex: 2147483646,
         pointerEvents: 'none',
       }}
     >
-      <div style={{ maxWidth: 960, margin: '0 auto', pointerEvents: 'auto' }}>
+      <div
+        style={{
+          maxWidth: 980,
+          margin: '0 auto',
+          pointerEvents: 'auto',
+        }}
+      >
         <div
           style={{
             display: 'flex',
@@ -38,21 +73,22 @@ export function Hand({ cards, onSelect, liftPx = 24 }: HandProps) {
             <button
               key={c.id}
               onClick={() => onSelect?.(c)}
+              role="gridcell"
               style={{
                 flexShrink: 0,
                 padding: '8px 12px',
-                borderRadius: 8,
-                border: '1px solid rgba(0,0,0,0.1)',
-                background: 'rgba(255,255,255,0.95)',
-                boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
-                transform: 'translateY(-8px)',
-                transition: 'transform 200ms',
+                borderRadius: 10,
+                border: '1px solid rgba(0,0,0,0.12)',
+                background: 'rgba(255,255,255,0.98)',
+                boxShadow: '0 6px 16px rgba(0,0,0,0.18)',
+                transform: 'translateY(-10px)', // “resting” lifted look
+                transition: 'transform 180ms',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-12px)')}
-              onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(-8px)')}
+              onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-16px)')}
+              onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(-10px)')}
             >
-              <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.7 }}>{c.name}</div>
-              <div style={{ fontSize: 20, fontWeight: 800, lineHeight: 1 }}>{c.number}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.7 }}>{c.name}</div>
+              <div style={{ fontSize: 22, fontWeight: 800, lineHeight: 1 }}>{c.number}</div>
             </button>
           ))}
         </div>
@@ -60,6 +96,5 @@ export function Hand({ cards, onSelect, liftPx = 24 }: HandProps) {
     </div>
   );
 
-  // Render to <body> so transforms/overflow on ancestors can’t clip it
-  return createPortal(handUI, document.body);
+  return createPortal(ui, overlayRoot);
 }
